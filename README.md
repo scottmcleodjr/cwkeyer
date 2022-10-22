@@ -9,4 +9,4 @@ This was a part of a larger, unfinished project.  I wasn't getting around to fin
 
 ## Usage Example & Documentation
 
-The [usage example](cmd/usage_example/app.go) demonstrates the main functionalities.  The documentation comments are fairly complete - Look to the godoc for everything else you can do.
+The [usage example](cmd/usage_example/app.go) demonstrates the main functionalities.  The documentation comments are fairly complete - Look to the [documentation](https://pkg.go.dev/github.com/scottmcleodjr/cwkeyer) for everything else you can do.
