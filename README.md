@@ -7,9 +7,7 @@ CWKeyer is a library for sending morse code (CW) in Go.  The library uses an asy
 
 ### **Interface Compatibility**
 
-At the moment, the library has a Key that beeps and a Key that sets the DTR signal on a serial port.  The latter one does everything I need to interface with my radios, and I'm unsure what might be useful for other radios and interfaces.
-
-If you need something else, make an issue or pull request.  I'm happy to make this useful to more people.
+At the moment, the library has a Key that beeps and a Key that sets the DTR signal on a serial port.  The latter one does everything I need to interface with my radios.  If you need something else, make an issue or pull request.  I'm happy to make this useful to more people.
 
 
 ### **Usage Example & Documentation**
