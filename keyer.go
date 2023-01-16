@@ -24,24 +24,24 @@ type SerialDTRKey struct {
 
 // NewSerialDTRKey creates a SerialDTRKey on the specified port.
 // Suggested values based on testing: baudrate=115200.
-func NewSerialDTRKey(portName string, baudrate int) (SerialDTRKey, error) {
+func NewSerialDTRKey(portName string, baudrate int) (*SerialDTRKey, error) {
 	port, err := serial.Open(portName, &serial.Mode{BaudRate: baudrate})
 	if err != nil {
-		return SerialDTRKey{}, err
+		return &SerialDTRKey{}, err
 	}
 	Key := SerialDTRKey{port: port}
-	return Key, Key.Up() // Always start in the up position
+	return &Key, Key.Up() // Always start in the up position
 }
 
-func (s SerialDTRKey) ClosePort() error {
+func (s *SerialDTRKey) ClosePort() error {
 	return s.port.Close()
 }
 
-func (s SerialDTRKey) Down() error {
+func (s *SerialDTRKey) Down() error {
 	return s.port.SetDTR(true)
 }
 
-func (s SerialDTRKey) Up() error {
+func (s *SerialDTRKey) Up() error {
 	return s.port.SetDTR(false)
 }
 
@@ -51,25 +51,25 @@ type BeepKey struct {
 
 // NewBeepKey creates a BeepKey.
 // Suggested values based on testing: freq=700, sampleRate=48000, bufferSize=1200.
-func NewBeepKey(freq, sampleRate, bufferSize int) (BeepKey, error) {
+func NewBeepKey(freq, sampleRate, bufferSize int) (*BeepKey, error) {
 	speaker.Init(beep.SampleRate(sampleRate), bufferSize)
 	s, err := generators.SinTone(beep.SampleRate(sampleRate), freq)
 	if err != nil {
-		return BeepKey{}, err
+		return &BeepKey{}, err
 	}
-	return BeepKey{streamer: s}, nil
+	return &BeepKey{streamer: s}, nil
 }
 
-func (b BeepKey) CloseSpeaker() {
+func (b *BeepKey) CloseSpeaker() {
 	speaker.Close()
 }
 
-func (b BeepKey) Down() error {
+func (b *BeepKey) Down() error {
 	speaker.Play(b.streamer)
 	return nil
 }
 
-func (b BeepKey) Up() error {
+func (b *BeepKey) Up() error {
 	speaker.Clear()
 	return nil
 }
