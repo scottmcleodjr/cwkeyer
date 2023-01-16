@@ -92,17 +92,17 @@ type Key interface {
 }
 
 type Keyer struct {
-	key       Key
-	speed     SpeedProvider
-	sendQueue chan event
+	key           Key
+	speedProvider SpeedProvider
+	sendQueue     chan event
 }
 
 // New creates a Keyer.
 func New(speed SpeedProvider, key Key) *Keyer {
 	return &Keyer{
-		speed:     speed,
-		key:       key,
-		sendQueue: make(chan event, eventChanLength),
+		speedProvider: speed,
+		key:           key,
+		sendQueue:     make(chan event, eventChanLength),
 	}
 }
 
@@ -174,13 +174,13 @@ func (k *Keyer) keyEvent(e event) error {
 			return err
 		}
 	}
-	time.Sleep(eventLength(e, k.speed.Speed()))
+	time.Sleep(eventLength(e, k.speedProvider.Speed()))
 	if e == dit || e == dah {
 		err := k.key.Up()
 		if err != nil {
 			return err
 		}
 	}
-	time.Sleep(eventLength(space, k.speed.Speed()))
+	time.Sleep(eventLength(space, k.speedProvider.Speed()))
 	return nil
 }
