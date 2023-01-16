@@ -93,8 +93,8 @@ type Keyer struct {
 }
 
 // New creates a Keyer.
-func New(speed SpeedProvider, key Key) Keyer {
-	return Keyer{
+func New(speed SpeedProvider, key Key) *Keyer {
+	return &Keyer{
 		speed:     speed,
 		key:       key,
 		sendQueue: make(chan event, eventChanLength),
@@ -104,7 +104,7 @@ func New(speed SpeedProvider, key Key) Keyer {
 // ProcessSendQueue processes the send queue.  A bool is accepted
 // to indicate if ProcessSendQueue should return when the queue is
 // empty.  A method error from the Key will always cause a return.
-func (k Keyer) ProcessSendQueue(returnOnEmptyQueue bool) error {
+func (k *Keyer) ProcessSendQueue(returnOnEmptyQueue bool) error {
 	for {
 		if returnOnEmptyQueue && k.SendQueueIsEmpty() {
 			return nil
@@ -118,13 +118,13 @@ func (k Keyer) ProcessSendQueue(returnOnEmptyQueue bool) error {
 }
 
 // SendQueueIsEmpty returns true when there is nothing waiting to be sent.
-func (k Keyer) SendQueueIsEmpty() bool {
+func (k *Keyer) SendQueueIsEmpty() bool {
 	return len(k.sendQueue) == 0
 }
 
 // QueueMessage adds a string to the send queue.  An error is returned
 // if the string contains an unsupported rune.
-func (k Keyer) QueueMessage(message string) error {
+func (k *Keyer) QueueMessage(message string) error {
 	// Check IsKeyable before any are put on the queue
 	for _, r := range message {
 		if !IsKeyable(r) {
@@ -139,7 +139,7 @@ func (k Keyer) QueueMessage(message string) error {
 
 // QueueRune adds a rune to the send queue.  An error is returned
 // if the rune is unsupported.
-func (k Keyer) QueueRune(r rune) error {
+func (k *Keyer) QueueRune(r rune) error {
 	events, present := events(r)
 	if !present {
 		return fmt.Errorf("unsupported character: %q", r)
@@ -152,7 +152,7 @@ func (k Keyer) QueueRune(r rune) error {
 
 // DrainSendQueue interrupts the current message by
 // draining the send queue, returning when it is empty.
-func (k Keyer) DrainSendQueue() {
+func (k *Keyer) DrainSendQueue() {
 	for {
 		select {
 		case <-k.sendQueue:
@@ -162,7 +162,7 @@ func (k Keyer) DrainSendQueue() {
 	}
 }
 
-func (k Keyer) keyEvent(e event) error {
+func (k *Keyer) keyEvent(e event) error {
 	if e == dit || e == dah {
 		err := k.key.Down()
 		if err != nil {

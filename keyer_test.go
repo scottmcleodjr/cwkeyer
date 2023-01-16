@@ -29,7 +29,7 @@ func (ts testSpeedProvider) Speed() int {
 
 // pollSendQueueUntilEmpty blocks until k.SendQueueIsEmpty() returns true
 // or the timeout is reached.  Returns true if the timeout was reached.
-func pollSendQueueUntilEmpty(k Keyer, timeout time.Duration) bool {
+func pollSendQueueUntilEmpty(k *Keyer, timeout time.Duration) bool {
 	done := make(chan interface{})
 	go func() {
 		// Poll over a short interval.  3ms should be okay.
@@ -61,13 +61,13 @@ func TestProcessSendQueueErrorBehavior(t *testing.T) {
 
 	tests := []struct {
 		id        int // To tell which test failed
-		keyer     Keyer
-		sendInput func(Keyer) // Wrapping for type reasons
+		keyer     *Keyer
+		sendInput func(*Keyer) // Wrapping for type reasons
 	}{
-		{id: 1, keyer: downErrorKeyer, sendInput: func(k Keyer) { k.QueueMessage("A") }},
-		{id: 2, keyer: downErrorKeyer, sendInput: func(k Keyer) { k.QueueRune('A') }},
-		{id: 3, keyer: upErrorKeyer, sendInput: func(k Keyer) { k.QueueMessage("A") }},
-		{id: 4, keyer: upErrorKeyer, sendInput: func(k Keyer) { k.QueueRune('A') }},
+		{id: 1, keyer: downErrorKeyer, sendInput: func(k *Keyer) { k.QueueMessage("A") }},
+		{id: 2, keyer: downErrorKeyer, sendInput: func(k *Keyer) { k.QueueRune('A') }},
+		{id: 3, keyer: upErrorKeyer, sendInput: func(k *Keyer) { k.QueueMessage("A") }},
+		{id: 4, keyer: upErrorKeyer, sendInput: func(k *Keyer) { k.QueueRune('A') }},
 	}
 
 	for _, test := range tests {
