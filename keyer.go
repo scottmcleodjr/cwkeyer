@@ -29,8 +29,8 @@ func NewSerialDTRKey(portName string, baudrate int) (*SerialDTRKey, error) {
 	if err != nil {
 		return &SerialDTRKey{}, err
 	}
-	Key := SerialDTRKey{port: port}
-	return &Key, Key.Up() // Always start in the up position
+	key := SerialDTRKey{port: port}
+	return &key, key.Up() // Always start in the up position
 }
 
 func (s *SerialDTRKey) ClosePort() error {
