@@ -52,11 +52,16 @@ type BeepKey struct {
 // NewBeepKey creates a BeepKey.
 // Suggested values based on testing: freq=700, sampleRate=48000, bufferSize=1200.
 func NewBeepKey(freq, sampleRate, bufferSize int) (*BeepKey, error) {
-	speaker.Init(beep.SampleRate(sampleRate), bufferSize)
+	err := speaker.Init(beep.SampleRate(sampleRate), bufferSize)
+	if err != nil {
+		return &BeepKey{}, err
+	}
+
 	s, err := generators.SinTone(beep.SampleRate(sampleRate), freq)
 	if err != nil {
 		return &BeepKey{}, err
 	}
+
 	return &BeepKey{streamer: s}, nil
 }
 
