@@ -2,6 +2,7 @@ package cwkeyer_test
 
 import (
 	"errors"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -135,9 +136,9 @@ func TestQueueMessage(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		var eventCount int
+		var eventCount atomic.Uint32
 		keyFunc := func() error {
-			eventCount++
+			eventCount.Add(1)
 			return nil
 		}
 
@@ -159,7 +160,7 @@ func TestQueueMessage(t *testing.T) {
 		if timedOut {
 			t.Errorf("timeout reached waiting on message %q to send", test.input)
 		}
-		if eventCount != test.keyEventsWanted {
+		if int(eventCount.Load()) != test.keyEventsWanted {
 			t.Errorf("got %d, want %d CW events for message %q",
 				eventCount, test.keyEventsWanted, test.input)
 		}
@@ -179,9 +180,9 @@ func TestQueueRune(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		var eventCount int
+		var eventCount atomic.Uint32
 		keyFunc := func() error {
-			eventCount++
+			eventCount.Add(1)
 			return nil
 		}
 
@@ -203,7 +204,7 @@ func TestQueueRune(t *testing.T) {
 		if timedOut {
 			t.Errorf("timeout reached waiting on rune %q to send", test.input)
 		}
-		if eventCount != test.keyEventsWanted {
+		if int(eventCount.Load()) != test.keyEventsWanted {
 			t.Errorf("got %d, want %d CW events for rune %q",
 				eventCount, test.keyEventsWanted, test.input)
 		}
