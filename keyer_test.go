@@ -2,6 +2,7 @@ package cwkeyer_test
 
 import (
 	"errors"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -29,7 +30,7 @@ func (ts testSpeedProvider) Speed() int {
 
 // pollSendQueueUntilEmpty blocks until k.SendQueueIsEmpty() returns true
 // or the timeout is reached.  Returns true if the timeout was reached.
-func pollSendQueueUntilEmpty(k Keyer, timeout time.Duration) bool {
+func pollSendQueueUntilEmpty(k *Keyer, timeout time.Duration) bool {
 	done := make(chan interface{})
 	go func() {
 		// Poll over a short interval.  3ms should be okay.
@@ -61,13 +62,13 @@ func TestProcessSendQueueErrorBehavior(t *testing.T) {
 
 	tests := []struct {
 		id        int // To tell which test failed
-		keyer     Keyer
-		sendInput func(Keyer) // Wrapping for type reasons
+		keyer     *Keyer
+		sendInput func(*Keyer) // Wrapping for type reasons
 	}{
-		{id: 1, keyer: downErrorKeyer, sendInput: func(k Keyer) { k.QueueMessage("A") }},
-		{id: 2, keyer: downErrorKeyer, sendInput: func(k Keyer) { k.QueueRune('A') }},
-		{id: 3, keyer: upErrorKeyer, sendInput: func(k Keyer) { k.QueueMessage("A") }},
-		{id: 4, keyer: upErrorKeyer, sendInput: func(k Keyer) { k.QueueRune('A') }},
+		{id: 1, keyer: downErrorKeyer, sendInput: func(k *Keyer) { k.QueueMessage("A") }},
+		{id: 2, keyer: downErrorKeyer, sendInput: func(k *Keyer) { k.QueueRune('A') }},
+		{id: 3, keyer: upErrorKeyer, sendInput: func(k *Keyer) { k.QueueMessage("A") }},
+		{id: 4, keyer: upErrorKeyer, sendInput: func(k *Keyer) { k.QueueRune('A') }},
 	}
 
 	for _, test := range tests {
@@ -135,9 +136,9 @@ func TestQueueMessage(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		var eventCount int
+		var eventCount atomic.Uint32
 		keyFunc := func() error {
-			eventCount++
+			eventCount.Add(1)
 			return nil
 		}
 
@@ -159,7 +160,7 @@ func TestQueueMessage(t *testing.T) {
 		if timedOut {
 			t.Errorf("timeout reached waiting on message %q to send", test.input)
 		}
-		if eventCount != test.keyEventsWanted {
+		if int(eventCount.Load()) != test.keyEventsWanted {
 			t.Errorf("got %d, want %d CW events for message %q",
 				eventCount, test.keyEventsWanted, test.input)
 		}
@@ -179,9 +180,9 @@ func TestQueueRune(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		var eventCount int
+		var eventCount atomic.Uint32
 		keyFunc := func() error {
-			eventCount++
+			eventCount.Add(1)
 			return nil
 		}
 
@@ -203,7 +204,7 @@ func TestQueueRune(t *testing.T) {
 		if timedOut {
 			t.Errorf("timeout reached waiting on rune %q to send", test.input)
 		}
-		if eventCount != test.keyEventsWanted {
+		if int(eventCount.Load()) != test.keyEventsWanted {
 			t.Errorf("got %d, want %d CW events for rune %q",
 				eventCount, test.keyEventsWanted, test.input)
 		}

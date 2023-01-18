@@ -24,24 +24,24 @@ type SerialDTRKey struct {
 
 // NewSerialDTRKey creates a SerialDTRKey on the specified port.
 // Suggested values based on testing: baudrate=115200.
-func NewSerialDTRKey(portName string, baudrate int) (SerialDTRKey, error) {
+func NewSerialDTRKey(portName string, baudrate int) (*SerialDTRKey, error) {
 	port, err := serial.Open(portName, &serial.Mode{BaudRate: baudrate})
 	if err != nil {
-		return SerialDTRKey{}, err
+		return &SerialDTRKey{}, err
 	}
-	Key := SerialDTRKey{port: port}
-	return Key, Key.Up() // Always start in the up position
+	key := SerialDTRKey{port: port}
+	return &key, key.Up() // Always start in the up position
 }
 
-func (s SerialDTRKey) ClosePort() error {
+func (s *SerialDTRKey) ClosePort() error {
 	return s.port.Close()
 }
 
-func (s SerialDTRKey) Down() error {
+func (s *SerialDTRKey) Down() error {
 	return s.port.SetDTR(true)
 }
 
-func (s SerialDTRKey) Up() error {
+func (s *SerialDTRKey) Up() error {
 	return s.port.SetDTR(false)
 }
 
@@ -51,25 +51,30 @@ type BeepKey struct {
 
 // NewBeepKey creates a BeepKey.
 // Suggested values based on testing: freq=700, sampleRate=48000, bufferSize=1200.
-func NewBeepKey(freq, sampleRate, bufferSize int) (BeepKey, error) {
-	speaker.Init(beep.SampleRate(sampleRate), bufferSize)
+func NewBeepKey(freq, sampleRate, bufferSize int) (*BeepKey, error) {
+	err := speaker.Init(beep.SampleRate(sampleRate), bufferSize)
+	if err != nil {
+		return &BeepKey{}, err
+	}
+
 	s, err := generators.SinTone(beep.SampleRate(sampleRate), freq)
 	if err != nil {
-		return BeepKey{}, err
+		return &BeepKey{}, err
 	}
-	return BeepKey{streamer: s}, nil
+
+	return &BeepKey{streamer: s}, nil
 }
 
-func (b BeepKey) CloseSpeaker() {
+func (b *BeepKey) CloseSpeaker() {
 	speaker.Close()
 }
 
-func (b BeepKey) Down() error {
+func (b *BeepKey) Down() error {
 	speaker.Play(b.streamer)
 	return nil
 }
 
-func (b BeepKey) Up() error {
+func (b *BeepKey) Up() error {
 	speaker.Clear()
 	return nil
 }
@@ -87,24 +92,24 @@ type Key interface {
 }
 
 type Keyer struct {
-	key       Key
-	speed     SpeedProvider
-	sendQueue chan event
+	key           Key
+	speedProvider SpeedProvider
+	sendQueue     chan event
 }
 
 // New creates a Keyer.
-func New(speed SpeedProvider, key Key) Keyer {
-	return Keyer{
-		speed:     speed,
-		key:       key,
-		sendQueue: make(chan event, eventChanLength),
+func New(speed SpeedProvider, key Key) *Keyer {
+	return &Keyer{
+		speedProvider: speed,
+		key:           key,
+		sendQueue:     make(chan event, eventChanLength),
 	}
 }
 
 // ProcessSendQueue processes the send queue.  A bool is accepted
 // to indicate if ProcessSendQueue should return when the queue is
 // empty.  A method error from the Key will always cause a return.
-func (k Keyer) ProcessSendQueue(returnOnEmptyQueue bool) error {
+func (k *Keyer) ProcessSendQueue(returnOnEmptyQueue bool) error {
 	for {
 		if returnOnEmptyQueue && k.SendQueueIsEmpty() {
 			return nil
@@ -118,13 +123,13 @@ func (k Keyer) ProcessSendQueue(returnOnEmptyQueue bool) error {
 }
 
 // SendQueueIsEmpty returns true when there is nothing waiting to be sent.
-func (k Keyer) SendQueueIsEmpty() bool {
+func (k *Keyer) SendQueueIsEmpty() bool {
 	return len(k.sendQueue) == 0
 }
 
 // QueueMessage adds a string to the send queue.  An error is returned
 // if the string contains an unsupported rune.
-func (k Keyer) QueueMessage(message string) error {
+func (k *Keyer) QueueMessage(message string) error {
 	// Check IsKeyable before any are put on the queue
 	for _, r := range message {
 		if !IsKeyable(r) {
@@ -139,7 +144,7 @@ func (k Keyer) QueueMessage(message string) error {
 
 // QueueRune adds a rune to the send queue.  An error is returned
 // if the rune is unsupported.
-func (k Keyer) QueueRune(r rune) error {
+func (k *Keyer) QueueRune(r rune) error {
 	events, present := events(r)
 	if !present {
 		return fmt.Errorf("unsupported character: %q", r)
@@ -152,7 +157,7 @@ func (k Keyer) QueueRune(r rune) error {
 
 // DrainSendQueue interrupts the current message by
 // draining the send queue, returning when it is empty.
-func (k Keyer) DrainSendQueue() {
+func (k *Keyer) DrainSendQueue() {
 	for {
 		select {
 		case <-k.sendQueue:
@@ -162,20 +167,20 @@ func (k Keyer) DrainSendQueue() {
 	}
 }
 
-func (k Keyer) keyEvent(e event) error {
+func (k *Keyer) keyEvent(e event) error {
 	if e == dit || e == dah {
 		err := k.key.Down()
 		if err != nil {
 			return err
 		}
 	}
-	time.Sleep(eventLength(e, k.speed.Speed()))
+	time.Sleep(eventLength(e, k.speedProvider.Speed()))
 	if e == dit || e == dah {
 		err := k.key.Up()
 		if err != nil {
 			return err
 		}
 	}
-	time.Sleep(eventLength(space, k.speed.Speed()))
+	time.Sleep(eventLength(space, k.speedProvider.Speed()))
 	return nil
 }
