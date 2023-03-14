@@ -29,7 +29,15 @@ func NewSerialDTRKey(portName string, baudrate int) (*SerialDTRKey, error) {
 	if err != nil {
 		return &SerialDTRKey{}, err
 	}
+
 	key := SerialDTRKey{port: port}
+
+	// RTS off so we don't trip the interface PTT
+	err = key.port.SetRTS(false)
+	if err != nil {
+		return &SerialDTRKey{}, err
+	}
+
 	return &key, key.Up() // Always start in the up position
 }
 
