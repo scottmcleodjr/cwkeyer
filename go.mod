@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	github.com/gopxl/beep v1.4.0
-	go.bug.st/serial v1.5.0
+	go.bug.st/serial v1.6.2
 )
 
 require (
