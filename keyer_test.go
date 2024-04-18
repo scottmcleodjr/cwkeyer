@@ -162,7 +162,7 @@ func TestQueueMessage(t *testing.T) {
 		}
 		if int(eventCount.Load()) != test.keyEventsWanted {
 			t.Errorf("got %d, want %d CW events for message %q",
-				eventCount, test.keyEventsWanted, test.input)
+				eventCount.Load(), test.keyEventsWanted, test.input)
 		}
 	}
 }
@@ -206,7 +206,7 @@ func TestQueueRune(t *testing.T) {
 		}
 		if int(eventCount.Load()) != test.keyEventsWanted {
 			t.Errorf("got %d, want %d CW events for rune %q",
-				eventCount, test.keyEventsWanted, test.input)
+				eventCount.Load(), test.keyEventsWanted, test.input)
 		}
 	}
 }
