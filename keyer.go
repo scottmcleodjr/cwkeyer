@@ -9,9 +9,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/faiface/beep"
-	"github.com/faiface/beep/generators"
-	"github.com/faiface/beep/speaker"
+	"github.com/gopxl/beep"
+	"github.com/gopxl/beep/generators"
+	"github.com/gopxl/beep/speaker"
 	"go.bug.st/serial"
 )
 
@@ -59,13 +59,13 @@ type BeepKey struct {
 
 // NewBeepKey creates a BeepKey.
 // Suggested values based on testing: freq=700, sampleRate=48000, bufferSize=1200.
-func NewBeepKey(freq, sampleRate, bufferSize int) (*BeepKey, error) {
+func NewBeepKey(freq float64, sampleRate int, bufferSize int) (*BeepKey, error) {
 	err := speaker.Init(beep.SampleRate(sampleRate), bufferSize)
 	if err != nil {
 		return &BeepKey{}, err
 	}
 
-	s, err := generators.SinTone(beep.SampleRate(sampleRate), freq)
+	s, err := generators.SineTone(beep.SampleRate(sampleRate), freq)
 	if err != nil {
 		return &BeepKey{}, err
 	}
